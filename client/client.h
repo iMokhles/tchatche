@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "../protocol/protocol.h"
 
 void run();
 void connexion();

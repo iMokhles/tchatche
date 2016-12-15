@@ -19,6 +19,7 @@ void run()
   connexion();
 }
 
+00XXTYPEPseudoMessage
 
 void connexion()
 {
@@ -78,15 +79,26 @@ void deconnexion()
 void read_message()
 {
   int msg_length;
-  char* tmp = (char*) malloc (1);
   char* msg;
 
   char c;
-
-  while(c >= 48 && c <= 57) //number for ascii
+  int tmp = 1
+  char* tmp_size = (char*) calloc (1, 1);
+  while(1) //number for ascii
   {
     read(pipes[1], &c, strlen(char));
+    if(c >= 48 && c <= 57)
+      break;
+    tmp++;
+    tmp_size = (char*) realloc (tmp_size, tmp);
+    tmp_size[tmp-1] = c;
   }
+
+  msg_length = atoi(size);
+  msg = (char*) calloc (msg_length, sizeof(char));
+
+  read(pipes[1], msg, msg_length);
+
 }
 
 void send_message(const char* msg)
