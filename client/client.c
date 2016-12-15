@@ -51,7 +51,7 @@ void connexion()
 //FIXME : envoyer le msg encodé + récup id + chemin de tube perso et l'ouvrir en lecture.
 int connexion_approval(char* pseudo)
 {
-        write(pipes[0], pseudo, strlen(pseudo) * sizeof(char));
+  write(pipes[0], pseudo, strlen(pseudo) * sizeof(char));
 	char buff[4];
 
 	read(pipes[0], ?, ?);

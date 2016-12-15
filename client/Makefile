@@ -1,17 +1,15 @@
 CC=gcc
 CFLAGS=-Wall
-EXEC=tchatche
+EXEC=tmp
 
 all: $(EXEC)
 
-tchatche: file1.o file2.o
-        $(CC) -o $@ $^
-
-%.o: %.c
-        $(CC) -o $@ -c $< $(CFLAGS)
+tmp: ihm.c
+				$(CC) -o $@ $^ -lpanel -lncurses
 
 clean:
-        rm -rf *.o
+				rm -rf *.o
 
 mrproper: clean
-        rm -rf $(EXEC)
+				rm -rf *.o
+				rm -rf $(EXEC)
