@@ -9,7 +9,7 @@
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
-char* network_path "../network/network.pipe";
+char* network_path "../network/Serveur.pipe";
 char* my_pipe = "";
 int id;
 int* pipes = (int*) malloc (sizeof(int)*2);
@@ -18,8 +18,6 @@ void run()
 {
   connexion();
 }
-
-00XXTYPEPseudoMessage
 
 void connexion()
 {
@@ -44,7 +42,7 @@ void connexion()
 		printf("Veuillez choisir un pseudo : ");
 		if((buff = get_message(size)) == NULL) // pas d'input de l'utilisateur
 			continue;
-
+    
 	}while(connexion_approval(buff) == -1)
 
 }
@@ -87,7 +85,7 @@ void read_message()
   while(1) //number for ascii
   {
     read(pipes[1], &c, strlen(char));
-    if(c >= 48 && c <= 57)
+    if(c < 48 || c > 57) // c is not a number, we got the full length
       break;
     tmp++;
     tmp_size = (char*) realloc (tmp_size, tmp);
@@ -98,7 +96,6 @@ void read_message()
   msg = (char*) calloc (msg_length, sizeof(char));
 
   read(pipes[1], msg, msg_length);
-
 }
 
 void send_message(const char* msg)
