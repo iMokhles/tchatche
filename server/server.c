@@ -8,7 +8,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <ctype.h>
-#include "../protocol/protocol_instance.h"
+#include "protocol_primitives.h"
+#include "protocol_instance.h"
+
 
 #define OCTET_4 4 
 #define OCTET_8 8 
@@ -35,9 +37,9 @@ int main(int arg , char * argv []){
   action.sa_flags = 0;
   sigaction(SIGPIPE,&action,NULL);
   
-  gboolean r ; 
+ /* gboolean r ; 
   GHashTable * hash_tab_pseudo_id =  g_hash_table_new (g_str_hash, g_str_equal);
-  GHashTable * hash_tab_id_pipe =  g_hash_table_new (g_str_hash, g_str_equal);
+  GHashTable * hash_tab_id_pipe =  g_hash_table_new (g_str_hash, g_str_equal); */
   
   if(access(path_server,F_OK) == -1){
     int r = mkfifo(path_server,0666);
@@ -75,9 +77,9 @@ int main(int arg , char * argv []){
     
     sleep(1);
     
-    protocol_data * dissection = dissectProtocol(msg);
-    printf("pseudo %s \n",get_connexion_pseudo(dissection));
-    printf("pipe %s \n",get_connexion_pipe(dissection));
+    // protocol_data * dissection = dissectProtocol(msg);
+    //printf("pseudo %s \n",get_connexion_pseudo(dissection));
+    //printf("pipe %s \n",get_connexion_pipe(dissection));
     
   }
   return  0 ;
