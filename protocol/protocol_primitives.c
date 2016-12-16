@@ -254,19 +254,16 @@ int char2int(char c) {
 // (1) On suppose qu'on ne peut pas avoir de chiffres dans le type
 // (2) On suppose que le type ne contient que des lettres majuscules
 long int decodeNumber(char* message) {
-	long int result = 0;
-	int size_of_length = 0;
+	int allocation = 1;
+	char* buffer = (char*)malloc(allocation*sizeof(char));
 	int i = 0;
 	while (isdigit(message[i])) {
+		buffer[i] = message[i];
+		allocation++;
+		buffer = realloc(buffer, allocation*sizeof(char));
 		i++;
-		size_of_length++;
 	}
-	int left_factor = (int)(pow(10.0, (double)(size_of_length-1)));
-	for (i = 0; i < size_of_length; i++) {
-		result += (char2int(message[i]))*left_factor;
-		left_factor /= 10;
-	}
-	return result;
+	return atoi(buffer);
 }
 
 long int decodeLength(protocol_message message) {
