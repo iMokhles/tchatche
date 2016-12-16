@@ -96,7 +96,7 @@ const char* encodeType(message_type type) {
 		case DEBG_t: return "DEBG"; break;
 		case FILE_t: return "FILE"; break;
 		default:
-			perror("messagetype_to_string : unknown or unimplemented type");
+			printf("messagetype_to_string : unknown or unimplemented type");
 			exit(0);
 			break;
 	}
@@ -128,7 +128,7 @@ char* encodeString(char* string, long int length) {
 		buffer[length+8] = '\0';
 	}
 	else {
-		perror("encodeString : length to large to encode");
+		printf("encodeString : length to large to encode");
 		exit(0);
 	}
 	buffer = strcat(buffer, numberEncoding);
@@ -146,7 +146,7 @@ protocol_data* initMessageHeader(message_type type) {
 }
 
 protocol_message encodeProtocolData(protocol_data* d) {
-	// Header composition
+	// Composition de l'entête du message
 	int length_nbchar = 0;
 	char* numberEncoding;
 	if (d->total_length <= 9999)
@@ -154,7 +154,7 @@ protocol_message encodeProtocolData(protocol_data* d) {
 	else if (d->total_length <= 99999999)
 		length_nbchar = 8;
 	else {
-		perror("encodeProtocolData : length to large to encode");
+		printf("encodeProtocolData : length to large to encode");
 		exit(0);
 	}
 	char* buffer_message = (char*)calloc(sizeof(char), length_nbchar+TYPE_LENGTH+1);
@@ -169,7 +169,7 @@ protocol_message encodeProtocolData(protocol_data* d) {
 	buffer_message = strcat(buffer_message, encodeType(d->type));
 	buffer_message[length_nbchar+TYPE_LENGTH] = '\0';
 
-	// Data composition
+	// Composition des données du message dans une structure
 	data_element* e = d->data;
 	while (e != NULL) {
 		if (e->resource->is_string == 1) {
@@ -184,7 +184,7 @@ protocol_message encodeProtocolData(protocol_data* d) {
 			else if (e->resource->data_union->integer <= 99999999)
 				string_length = 8;
 			else {
-				perror("encodeProtocolData : depassement de limite d'entier.");
+				printf("encodeProtocolData : depassement de limite d'entier.");
 				exit(0);
 			}
 			char* numberEncoding = encodeNumber(e->resource->data_union->integer, string_length);
@@ -203,13 +203,21 @@ protocol_message encodeProtocolData(protocol_data* d) {
 void addMessageString(protocol_data* d, char* string) {
 	content_data* cd = (content_data*)malloc(sizeof(content_data));
 	content_union* cu = (content_union*)malloc(sizeof(content_union));
-	// String encoding
+	// Encodage de la chaine avec sa taille
 	long int string_length = strlen(string);
 	char* stringEncoding = encodeString(string, string_length);
-	int stringEncodingLength = strlen(stringEncoding);
+	int stringEncodingLength = string_length;
+	if (stringEncodingLength <= 9999)
+		stringEncodingLength += 4;
+	else if (stringEncodingLength <= 99999999)
+		string_length += 8;
+	else {
+		printf("addMessageString : depassement de limite d'entier.");
+		exit(0);
+	}
 	d->total_length += stringEncodingLength;
 
-	// Creation
+	// Assemblage
 	char* buffer = (char*)calloc(sizeof(char), stringEncodingLength);
 	buffer = strcat(buffer, stringEncoding);
 
@@ -220,14 +228,14 @@ void addMessageString(protocol_data* d, char* string) {
 }
 
 void addMessageNumber(protocol_data* d, long int number) {
-        if (number <= 9999)
-            d->total_length += 4;
-        else if (number <= 99999999)
-            d->total_length += 8;
-        else {
-            perror("addMessageNumber : depassement de limite d'entier.");
-	    exit(0);
-        }
+  if (number <= 9999)
+  	d->total_length += 4;
+  else if (number <= 99999999)
+  	d->total_length += 8;
+  else {
+  	printf("addMessageNumber : depassement de limite d'entier.");
+	  exit(0);
+  }
 	content_data* cd = (content_data*)malloc(sizeof(content_data));
 	content_union* cu = (content_union*)malloc(sizeof(content_union));
 	cu->integer = number;
@@ -272,48 +280,55 @@ const char* getTypeStructure(message_type type) {
 		case BYEE_t: return "I"; break;
 		case HELO_t: return "SS"; break;
 		default:
-			perror("getTypeStructure : unknown or unimplemented type");
-			exit(0);
+			return NULL;
 			break;
 	}
 }
 
 message_type decodeType(protocol_message message) {
+	int resultat = -1;
 	int i = 0;
 	while (isdigit(message[i]))
 		i++;
 	char* buffer = (char*)malloc(sizeof(char)*4);
 	sprintf(buffer, "%c%c%c%c", message[i], message[i+1], message[i+2], message[i+3]);
-	     if (strcmp("BCST", buffer) == 0) { return BCST_t; }
-	else if (strcmp("PRVT", buffer) == 0) { return PRVT_t; }
-	else if (strcmp("BADD", buffer) == 0) { return BADD_t; }
-	else if (strcmp("OKOK", buffer) == 0) { return OKOK_t; }
-	else if (strcmp("BYEE", buffer) == 0) { return BYEE_t; }
-	else if (strcmp("HELO", buffer) == 0) { return HELO_t; }
-	else if (strcmp("LIST", buffer) == 0) { return LIST_t; }
-	else if (strcmp("SHUT", buffer) == 0) { return SHUT_t; }
-	else if (strcmp("DEBG", buffer) == 0) { return DEBG_t; }
-	else if (strcmp("FILE", buffer) == 0) { return FILE_t; }
-	else { perror("decodeType : unknown or unimplemented type"); exit(0); }
+	     if (strcmp("BCST", buffer) == 0) { resultat = BCST_t; }
+	else if (strcmp("PRVT", buffer) == 0) { resultat = PRVT_t; }
+	else if (strcmp("BADD", buffer) == 0) { resultat = BADD_t; }
+	else if (strcmp("OKOK", buffer) == 0) { resultat = OKOK_t; }
+	else if (strcmp("BYEE", buffer) == 0) { resultat = BYEE_t; }
+	else if (strcmp("HELO", buffer) == 0) { resultat = HELO_t; }
+	else if (strcmp("LIST", buffer) == 0) { resultat = LIST_t; }
+	else if (strcmp("SHUT", buffer) == 0) { resultat = SHUT_t; }
+	else if (strcmp("DEBG", buffer) == 0) { resultat = DEBG_t; }
+	else if (strcmp("FILE", buffer) == 0) { resultat = FILE_t; }
 	free(buffer);
+	return resultat;
 }
 
-protocol_data* extractMessageContent(protocol_data* data, const char* codeStructure) {
-	/* TODO */
+protocol_data* extractMessageContent(protocol_message message, protocol_data* data, const char* codeStructure) {
+	long int messageTotalLength = data->total_length;
+	int codeStructureLength = strlen(codeStructure);
+	char current_token;
+	int i;
+	for (i = 0; i < codeStructureLength; i++) {
+			current_token = codeStructure[i];
+
+	}
 	return NULL;
 }
 
 int headerLength(protocol_message message) {
-        int l = 0;
+  int l = 0;
 	while (isdigit(message[l]))
 	  l++;
 	return l+4;
 }
 
-protocol_data* decodeProtocolData(protocol_message message) {
+protocol_data* dissectProtocol(protocol_message message) {
 	protocol_data* protocolData = (protocol_data*)malloc(sizeof(protocol_data));
 	protocolData->total_length = decodeLength(message);
 	protocolData->type = decodeType(message);
 	const char* codeStructure = getTypeStructure(protocolData->type);
-	return extractMessageContent(protocolData, codeStructure);
+	return extractMessageContent(message, protocolData, codeStructure);
 }
