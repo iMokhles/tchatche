@@ -98,7 +98,7 @@ message_type decodeType(protocol_message message);
 // Retourne NULL si échec
 const char* getTypeStructure(message_type type);
 
-protocol_data* extractMessageContent(protocol_message message, protocol_data* data, const char* codeStructure);
+void extractMessageContent(protocol_message message, protocol_data* data, const char* codeStructure);
 
 int headerLength(protocol_message message);
 

@@ -202,9 +202,8 @@ protocol_message encodeProtocolData(protocol_data* d) {
 void addMessageString(protocol_data* d, char* string) {
 	content_data* cd = (content_data*)malloc(sizeof(content_data));
 	content_union* cu = (content_union*)malloc(sizeof(content_union));
-	// Encodage de la chaine avec sa taille
+	// Encodage de la chaine
 	long int string_length = strlen(string);
-	char* stringEncoding = encodeString(string, string_length);
 	int stringEncodingLength = string_length;
 	if (stringEncodingLength <= 9999)
 		stringEncodingLength += 4;
@@ -217,8 +216,8 @@ void addMessageString(protocol_data* d, char* string) {
 	d->total_length += stringEncodingLength;
 
 	// Assemblage
-	char* buffer = (char*)calloc(sizeof(char), stringEncodingLength);
-	buffer = strcat(buffer, stringEncoding);
+	char* buffer = (char*)calloc(sizeof(char), string_length);
+	buffer = strcat(buffer, string);
 
 	cu->string = buffer;
 	cd->is_string = 1;
@@ -302,16 +301,47 @@ message_type decodeType(protocol_message message) {
 	return resultat;
 }
 
-protocol_data* extractMessageContent(protocol_message message, protocol_data* data, const char* codeStructure) {
-	long int messageTotalLength = data->total_length;
+void extractMessageContent(protocol_message message, protocol_data* data, const char* codeStructure) {
+	/*long int messageTotalLength = data->total_length;
 	int codeStructureLength = strlen(codeStructure);
 	char current_token;
 	int i;
 	for (i = 0; i < codeStructureLength; i++) {
 			current_token = codeStructure[i];
 
+	}*/
+	// TEMPORAIRE EN ATTENDANT UN VRAI DECODAGE
+  int header_length = headerLength(message);
+	if (strcmp(codeStructure, "I") == 0) {
+		addMessageNumber(data, atoi(message+header_length));
 	}
-	return NULL;
+	else if (strcmp(codeStructure, "SS") == 0) {
+		int i;
+		char size1[4];
+		size1[0] = message[header_length];
+	  size1[1] = message[header_length+1];
+		size1[2] = message[header_length+2];
+		size1[3] = message[header_length+3];
+		int sizeString1 = atoi(size1);
+		char* string1 = malloc(sizeString1+1);
+		for (i = 0; i < sizeString1; i++) {
+			string1[i] = message[header_length+4+i];
+		}
+		string1[sizeString1] = '\0';
+		char size2[4];
+		size2[0] = message[header_length+4+sizeString1];
+	  size2[1] = message[header_length+4+sizeString1+1];
+		size2[2] = message[header_length+4+sizeString1+2];
+		size2[3] = message[header_length+4+sizeString1+3];
+		int sizeString2 = atoi(size2);
+		char* string2 = malloc(sizeString2+1);
+		string2[sizeString2] = '\0';
+		for (i = 0; i < sizeString2; i++) {
+			string2[i] = message[header_length+4+sizeString1+4+i];
+		}
+		addMessageString(data, string1);
+		addMessageString(data, string2);
+	}
 }
 
 int headerLength(protocol_message message) {
@@ -326,5 +356,6 @@ protocol_data* dissectProtocol(protocol_message message) {
 	protocolData->total_length = decodeLength(message);
 	protocolData->type = decodeType(message);
 	const char* codeStructure = getTypeStructure(protocolData->type);
-	return extractMessageContent(message, protocolData, codeStructure);
+	extractMessageContent(message, protocolData, codeStructure);
+	return protocolData;
 }
