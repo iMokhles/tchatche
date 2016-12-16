@@ -20,7 +20,6 @@ d'un nouveau type, on est prevenu par une erreur lors de l'execution.
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
-		printf("[%c]", connexion[i]);
 #include "protocol_primitives.h"
 
 #define TYPE_LENGTH 4
