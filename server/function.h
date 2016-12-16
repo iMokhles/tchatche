@@ -16,6 +16,4 @@ gboolean remove_user(GHashTable * hash_tab ,char const * key) ;
 
 
 
-
-
 #endif /*_FUNCTION_H*/

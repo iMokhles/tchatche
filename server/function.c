@@ -18,6 +18,7 @@ gboolean insert_user(GHashTable * hash_tab, char * pseudo , char * id){
    
 }
 
+
 gboolean is_in_hashTab(GHashTable * hash_tab ,char const * key){
   gboolean r ; 
   r =  g_hash_table_contains (hash_tab,key);
