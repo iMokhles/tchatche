@@ -33,8 +33,9 @@ int main() {
 
   // DECODAGE
   char* message = "0026HELO0008engboris0002s1";
-  printf("Pseudo : %s\n", get_connexion_pseudo(message));
-  printf("Pipe : %s\n", get_connexion_pipe(message));
+  protocol_data* dissection = dissectProtocol(message);
+  printf("Pseudo : %s\n", get_connexion_pseudo(dissection));
+  printf("Pipe : %s\n", get_connexion_pipe(dissection));
 
 	return 0;
 }

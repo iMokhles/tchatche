@@ -29,8 +29,8 @@ protocol_message encodeDeconnexionConfirmation(long int id);
 			FONCTIONS DE DECODAGE
    --------------------------------------------- */
 
-char* get_connexion_pseudo(protocol_message message);
+char* get_connexion_pseudo(protocol_data* message);
 
-char* get_connexion_pipe(protocol_message message);
+char* get_connexion_pipe(protocol_data* message);
 
 #endif
