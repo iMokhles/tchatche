@@ -1,115 +1,76 @@
-#include <stdlib.h>
+#include <ncurses.h>
+#include <panel.h>
 
-#include <curses.h>
+WINDOW *my_wins[3]; /* une fenêtre pour le texte et une pour les utilisateurs
+											 0 = fenêtre globale 1 = liste utilisateurs */
+PANEL  *my_panels[3]; // panels de chaque fenêtre
 
-int STARTX = 0;
-int STARTY = 0;
-int ENDX = 79;
-int ENDY = 24;
+WINDOW *create_newwin(int height, int width, int starty, int startx);
+void destroy_win(WINDOW *local_win);
 
-#define CELL_CHAR '#'
-#define TIME_OUT  300
+int main(int argc, char *argv[])
+{
+	int startx, starty, width, height;
+	int ch;
 
-typedef struct _state {
-	int oldstate;
-	int newstate;
-}state;
+	initscr();			/* Start curses mode 		*/
+	cbreak();			/* Line buffering disabled, Pass on
+					 * everty thing to me 		*/
+	keypad(stdscr, TRUE);		/* I need that nifty F1 	*/
+	// LINES - COLS macro
+	// height, width,  starty,  startx
+	my_wins[0] = create_newwin(LINES-3, COLS, 0, 0);
+	my_wins[1] = create_newwin(LINES, 10, 0, COLS-10);
+	my_wins[2] = create_newwin(3, COLS-10, LINES-3, 0);
 
-void display(WINDOW *win, state **area, int startx, int starty, int endx, int endy);
-void calc(state **area, int x, int y);
-void update_state(state **area, int startx, int starty, int endx, int endy);
+	int i;
+	for( i = 0 ; i < 3 ; i++)
+		my_panels[i] = new_panel(my_wins[i]);
 
-int main()
-{	state **workarea;
-	int i, j;
+	/* Update the stacking order. 2nd panel will be on top */
+	update_panels();
 
-	initscr();
-	cbreak();
-	timeout(TIME_OUT);
-	keypad(stdscr, TRUE);
+	/* Show it on the screen */
+	doupdate();
+	wmove(my_wins[2],1, 1);
+	refresh();
 
-	ENDX = COLS - 1;
-	ENDY = LINES - 1;
-
-	workarea = (state **)calloc(COLS, sizeof(state *));
-	for(i = 0;i < COLS; ++i)
-		workarea[i] = (state *)calloc(LINES, sizeof(state));
-
-	/* For inverted U */
-	workarea[39][15].newstate = TRUE;
-	workarea[40][15].newstate = TRUE;
-	workarea[41][15].newstate = TRUE;
-	workarea[39][16].newstate = TRUE;
-	workarea[39][17].newstate = TRUE;
-	workarea[41][16].newstate = TRUE;
-	workarea[41][17].newstate = TRUE;
-
-  workarea[52][52].newstate = TRUE;
-  workarea[51][52].newstate = TRUE;
-    workarea[50][52].newstate = TRUE;
-      workarea[51][50].newstate = TRUE;
-      
-
-	update_state(workarea, STARTX, STARTY, ENDX, ENDY);
-
-	/* For block  */
-/*
-	workarea[37][13].newstate = TRUE;
-	workarea[37][14].newstate = TRUE;
-	workarea[38][13].newstate = TRUE;
-	workarea[38][14].newstate = TRUE;
-	update_state(workarea, STARTX, STARTY, ENDX, ENDY);
-*/
-	display(stdscr, workarea, STARTX, STARTY, ENDX, ENDY);
-	while(getch() != KEY_F(1))
-	{	for(i = STARTX; i <= ENDX; ++i)
-			for(j = STARTY; j <= ENDY; ++j)
-				calc(workarea, i, j);
-		update_state(workarea, STARTX, STARTY, ENDX, ENDY);
-		display(stdscr,  workarea, STARTX, STARTY, ENDX, ENDY);
-	}
-
-	endwin();
+	getch();	getch();	getch();	getch();	getch();	getch();	getch();	getch();	getch();	getch();	getch();	getch();	getch();	getch();	getch();	getch();
+	endwin();			/* End curses mode		  */
 	return 0;
 }
 
-void display(WINDOW *win, state **area, int startx, int starty, int endx, int endy)
-{	int i, j;
-	wclear(win);
-	for(i = startx; i <= endx; ++i)
-		for(j = starty;j <= endy; ++j)
-			if(area[i][j].newstate == TRUE)
-				mvwaddch(win, j, i, CELL_CHAR);
-	wrefresh(win);
+WINDOW *create_newwin(int height, int width, int starty, int startx)
+{
+	WINDOW *local_win;
+
+	local_win = newwin(height, width, starty, startx);
+	box(local_win, 0 , 0);		/* 0, 0 gives default characters
+					 * for the vertical and horizontal
+					 * lines			*/
+	wrefresh(local_win);		/* Show that box 		*/
+
+	return local_win;
 }
 
-void calc(state **area, int i, int j)
-{	int neighbours;
-	int newstate;
-
-	neighbours	=
-		area[(i - 1 + COLS) % COLS][j].oldstate		+
-		area[(i - 1 + COLS) % COLS][(j - 1 + LINES) % LINES].oldstate 	+
-		area[(i - 1 + COLS) % COLS][(j + 1) % LINES].oldstate 	+
-		area[(i + 1) % COLS][j].oldstate		+
-		area[(i + 1) % COLS][(j - 1 + LINES) % LINES].oldstate 	+
-		area[(i + 1) % COLS][(j + 1) % LINES].oldstate 	+
-		area[i][(j - 1 + LINES) % LINES].oldstate		+
-		area[i][(j + 1) % LINES].oldstate;
-
-	newstate = FALSE;
-	if(area[i][j].oldstate == TRUE && (neighbours == 2 || neighbours == 3))
-		 newstate = TRUE;
-	else
-		if(area[i][j].oldstate == FALSE && neighbours == 3)
-			 newstate = TRUE;
-	area[i][j].newstate = newstate;
-}
-
-void update_state(state **area, int startx, int starty, int endx, int endy)
-{	int i, j;
-
-	for(i = startx; i <= endx; ++i)
-		for(j = starty; j <= endy; ++j)
-			area[i][j].oldstate = area[i][j].newstate;
+void destroy_win(WINDOW *local_win)
+{
+	/* box(local_win, ' ', ' '); : This won't produce the desired
+	 * result of erasing the window. It will leave it's four corners
+	 * and so an ugly remnant of window.
+	 */
+	wborder(local_win, ' ', ' ', ' ',' ',' ',' ',' ',' ');
+	/* The parameters taken are
+	 * 1. win: the window on which to operate
+	 * 2. ls: character to be used for the left side of the window
+	 * 3. rs: character to be used for the right side of the window
+	 * 4. ts: character to be used for the top side of the window
+	 * 5. bs: character to be used for the bottom side of the window
+	 * 6. tl: character to be used for the top left corner of the window
+	 * 7. tr: character to be used for the top right corner of the window
+	 * 8. bl: character to be used for the bottom left corner of the window
+	 * 9. br: character to be used for the bottom right corner of the window
+	 */
+	wrefresh(local_win);
+	delwin(local_win);
 }
