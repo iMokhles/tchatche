@@ -6,7 +6,7 @@ Sa réalisation est l'oeuvre de 3 étudiants, Bachir Chelbi , Kostia Chardonnet 
 
 ## Messages administratifs (Staff only)
 
-[Insérer date de fin du projet]
+Soutenance du 11 au 13 Janvier.
 
 ## Fonctionnalités implémentées
 
