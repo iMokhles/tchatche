@@ -23,6 +23,8 @@ Pour proposer des requêtes, insérez des tâches dans la liste des autres. Ento
 - Demande de liste utilisateur [EXTENSION]
 
 ## [Protocole] : Boris
-- Analyse et découpage du protocole
-- Encodage dans le protocole
-- Décodage dans le protocole
+- ~~Analyse et découpage du protocole~~
+- ~~Encodage dans le protocole~~
+- ~~Décodage dans le protocole~~
+- Instances de protocole
+- GERER LES FUITES DE MEMOIRE :-1:
