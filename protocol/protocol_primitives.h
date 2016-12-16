@@ -9,7 +9,7 @@
 
 typedef char* protocol_message;
 
-#define MESSAGE_TYPE_LENGTH 4;
+#define MESSAGE_TYPE_LENGTH 4
 
 typedef enum message_type {
 	BCST_t,
@@ -54,8 +54,6 @@ typedef struct protocol_data {
 		    MANIPULATION DE DONNEES
    --------------------------------------------- */
 
-char* stringWithoutLength(char* string);
-
 void freeProtocolContent(content_data* d);
 
 void freeProtocolData(protocol_data* d);
@@ -94,7 +92,10 @@ long int decodeLength(protocol_message message);
 message_type decodeType(protocol_message message);
 
 // Permet de récupérer le code structure d'un protocol encodé sous forme d'une chaine de caractre
-// I signifie Integer et S signifie String
+// Le codage est le suivant :
+// I : Integer
+// L : Long
+// S : String
 // Retourne NULL si échec
 const char* getTypeStructure(message_type type);
 

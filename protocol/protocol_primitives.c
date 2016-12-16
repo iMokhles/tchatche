@@ -3,11 +3,11 @@
    ___________________________________________
 
 Format du protocole :
-- On represente la taille du messages avec 4 ou 8 caracteres
+- On represente la taille du messages avec 4 caracteres
 - Le type avec 4 caracteres
 - Le reste des donnees
   + Soit une taille de chaine suivie de la chaine concernee
-  + Un entier (4 ou 8 caracteres)
+  + Un entier simple(4) ou long(8)
 
 Le header correspond a la taille + le type
 
@@ -22,25 +22,9 @@ d'un nouveau type, on est prevenu par une erreur lors de l'execution.
 #include <math.h>
 #include "protocol_primitives.h"
 
-#define TYPE_LENGTH 4
-
 /* ---------------------------------------------
 		    MANIPULATION DE DONNEES
    --------------------------------------------- */
-
-char* stringWithoutLength(char* string) {
-	int length = strlen(string);
-	int offset = 0;
-	int i = 0;
-	while (isdigit(string[i])) {
-		offset++;
-		i++;
-	}
-	char* buffer = (char*)malloc(sizeof(char)*(length-offset+1));
-	buffer = strcpy(buffer, string+offset);
-	free(string);
-	return buffer;
-}
 
 void freeProtocolContent(content_data* d) {
 	if (d != NULL) {
@@ -156,7 +140,7 @@ protocol_message encodeProtocolData(protocol_data* d) {
 		printf("encodeProtocolData : length to large to encode");
 		exit(0);
 	}
-	char* buffer_message = (char*)calloc(sizeof(char), length_nbchar+TYPE_LENGTH+1);
+	char* buffer_message = (char*)calloc(sizeof(char), length_nbchar+MESSAGE_TYPE_LENGTH+1);
 	if (length_nbchar == 4) {
 		numberEncoding = encodeNumber(d->total_length, 4);
 		buffer_message = strcat(buffer_message, numberEncoding);
@@ -166,15 +150,16 @@ protocol_message encodeProtocolData(protocol_data* d) {
 		buffer_message = strcat(buffer_message, numberEncoding);
 	}
 	buffer_message = strcat(buffer_message, encodeType(d->type));
-	buffer_message[length_nbchar+TYPE_LENGTH] = '\0';
+	buffer_message[length_nbchar+MESSAGE_TYPE_LENGTH] = '\0';
 
 	// Composition des données du message dans une structure
 	data_element* e = d->data;
 	while (e != NULL) {
 		if (e->resource->is_string == 1) {
 			long int string_length = strlen(e->resource->data_union->string);
-			buffer_message = (char*)realloc(buffer_message, sizeof(char)*(length_nbchar+TYPE_LENGTH+string_length));
-			buffer_message = strcat(buffer_message, e->resource->data_union->string);
+			char* stringEncoding = encodeString(e->resource->data_union->string, string_length);
+			buffer_message = (char*)realloc(buffer_message, sizeof(char)*(length_nbchar+MESSAGE_TYPE_LENGTH+string_length));
+			buffer_message = strcat(buffer_message, stringEncoding);
 		}
 		else {
 			long int string_length;
@@ -187,7 +172,7 @@ protocol_message encodeProtocolData(protocol_data* d) {
 				exit(0);
 			}
 			char* numberEncoding = encodeNumber(e->resource->data_union->integer, string_length);
-			buffer_message = (char*)realloc(buffer_message, sizeof(char)*(length_nbchar+TYPE_LENGTH+string_length));
+			buffer_message = (char*)realloc(buffer_message, sizeof(char)*(length_nbchar+MESSAGE_TYPE_LENGTH+string_length));
 			buffer_message = strcat(buffer_message, numberEncoding);
 			free(numberEncoding);
 		}
@@ -285,7 +270,7 @@ message_type decodeType(protocol_message message) {
 	int i = 0;
 	while (isdigit(message[i]))
 		i++;
-	char* buffer = (char*)malloc(sizeof(char)*4);
+	char* buffer = (char*)malloc(sizeof(char)*MESSAGE_TYPE_LENGTH);
 	sprintf(buffer, "%c%c%c%c", message[i], message[i+1], message[i+2], message[i+3]);
 	     if (strcmp("BCST", buffer) == 0) { resultat = BCST_t; }
 	else if (strcmp("PRVT", buffer) == 0) { resultat = PRVT_t; }
@@ -302,14 +287,25 @@ message_type decodeType(protocol_message message) {
 }
 
 void extractMessageContent(protocol_message message, protocol_data* data, const char* codeStructure) {
-	/*long int messageTotalLength = data->total_length;
+	int messageTotalLength = data->total_length;
 	int codeStructureLength = strlen(codeStructure);
 	char current_token;
 	int i;
 	for (i = 0; i < codeStructureLength; i++) {
 			current_token = codeStructure[i];
+			switch (current_token) {
+				case 'I':
+					break;
+				case 'L':
+					break;
+				case 'S':
+					break;
+				default:
+					break;
+			}
+	}
 
-	}*/
+
 	// TEMPORAIRE EN ATTENDANT UN VRAI DECODAGE
   int header_length = headerLength(message);
 	if (strcmp(codeStructure, "I") == 0) {
@@ -348,7 +344,7 @@ int headerLength(protocol_message message) {
   int l = 0;
 	while (isdigit(message[l]))
 	  l++;
-	return l+4;
+	return l+MESSAGE_TYPE_LENGTH;
 }
 
 protocol_data* dissectProtocol(protocol_message message) {
