@@ -85,7 +85,7 @@ const char* encodeType(message_type type) {
 	}
 }
 
-char* encodeNumber(long int n, int length) {
+char* encodeNumber(int n, int length) {
 	char* buffer = (char*)malloc(sizeof(char)*length+1);
 	int i;
 	int mod_factor = 10, div_factor = 1;
@@ -97,7 +97,7 @@ char* encodeNumber(long int n, int length) {
 	return buffer;
 }
 
-char* encodeString(char* string, long int length) {
+char* encodeString(char* string, int length) {
 	char* buffer;
 	char* numberEncoding;
 	if (length <= 9999) {
@@ -122,7 +122,7 @@ char* encodeString(char* string, long int length) {
 
 protocol_data* initMessageHeader(message_type type) {
 	protocol_data* p = (protocol_data*)malloc(sizeof(protocol_data));
-	p->total_length = 8;
+	p->total_length = 4+MESSAGE_TYPE_LENGTH;
 	p->type = type;
 	p->data = NULL;
 	return p;
@@ -130,56 +130,36 @@ protocol_data* initMessageHeader(message_type type) {
 
 protocol_message encodeProtocolData(protocol_data* d) {
 	// Composition de l'entête du message
-	int length_nbchar = 0;
-	char* numberEncoding;
-	if (d->total_length <= 9999)
-		length_nbchar = 4;
-	else if (d->total_length <= 99999999)
-		length_nbchar = 8;
-	else {
-		printf("encodeProtocolData : length to large to encode");
-		exit(0);
-	}
+	int length_nbchar = 4;
 	char* buffer_message = (char*)calloc(sizeof(char), length_nbchar+MESSAGE_TYPE_LENGTH+1);
-	if (length_nbchar == 4) {
-		numberEncoding = encodeNumber(d->total_length, 4);
-		buffer_message = strcat(buffer_message, numberEncoding);
-	}
-	else {
-		numberEncoding = encodeNumber(d->total_length, 8);
-		buffer_message = strcat(buffer_message, numberEncoding);
-	}
+
+	char* numberEncoding = encodeNumber(d->total_length, 4);
+	buffer_message = strcat(buffer_message, numberEncoding);
 	buffer_message = strcat(buffer_message, encodeType(d->type));
-	buffer_message[length_nbchar+MESSAGE_TYPE_LENGTH] = '\0';
 
 	// Composition des données du message dans une structure
 	data_element* e = d->data;
 	while (e != NULL) {
+		// Cas des chaînes
 		if (e->resource->is_string == 1) {
-			long int string_length = strlen(e->resource->data_union->string);
+			int string_length = strlen(e->resource->data_union->string);
 			char* stringEncoding = encodeString(e->resource->data_union->string, string_length);
-			buffer_message = (char*)realloc(buffer_message, sizeof(char)*(length_nbchar+MESSAGE_TYPE_LENGTH+string_length));
+			buffer_message = (char*)realloc(buffer_message, sizeof(char)*(length_nbchar+MESSAGE_TYPE_LENGTH+4+string_length+1));
 			buffer_message = strcat(buffer_message, stringEncoding);
+			free(stringEncoding);
 		}
+		// Cas des nombres
 		else {
-			long int string_length;
-			if (e->resource->data_union->integer <= 9999)
-				string_length = 4;
-			else if (e->resource->data_union->integer <= 99999999)
-				string_length = 8;
-			else {
-				printf("encodeProtocolData : depassement de limite d'entier.");
-				exit(0);
-			}
+			int string_length = 4;
 			char* numberEncoding = encodeNumber(e->resource->data_union->integer, string_length);
-			buffer_message = (char*)realloc(buffer_message, sizeof(char)*(length_nbchar+MESSAGE_TYPE_LENGTH+string_length));
+			buffer_message = (char*)realloc(buffer_message, sizeof(char)*(length_nbchar+MESSAGE_TYPE_LENGTH+string_length+1));
 			buffer_message = strcat(buffer_message, numberEncoding);
 			free(numberEncoding);
 		}
 		e = e->next;
 	}
 
-	freeProtocolData(d);
+	//freeProtocolData(d);
 
 	return buffer_message;
 }
@@ -188,16 +168,8 @@ void addMessageString(protocol_data* d, char* string) {
 	content_data* cd = (content_data*)malloc(sizeof(content_data));
 	content_union* cu = (content_union*)malloc(sizeof(content_union));
 	// Encodage de la chaine
-	long int string_length = strlen(string);
-	int stringEncodingLength = string_length;
-	if (stringEncodingLength <= 9999)
-		stringEncodingLength += 4;
-	else if (stringEncodingLength <= 99999999)
-		string_length += 8;
-	else {
-		printf("addMessageString : depassement de limite d'entier.");
-		exit(0);
-	}
+	int string_length = strlen(string);
+	int stringEncodingLength = 4+string_length;
 	d->total_length += stringEncodingLength;
 
 	// Assemblage
@@ -210,7 +182,7 @@ void addMessageString(protocol_data* d, char* string) {
 	insertData(d, cd);
 }
 
-void addMessageNumber(protocol_data* d, long int number) {
+void addMessageNumber(protocol_data* d, int number) {
   if (number <= 9999)
   	d->total_length += 4;
   else if (number <= 99999999)
@@ -237,8 +209,9 @@ int char2int(char c) {
 
 // (1) On suppose qu'on ne peut pas avoir de chiffres dans le type
 // (2) On suppose que le type ne contient que des lettres majuscules
-long int decodeNumber(char* message) {
+int decodeNumber(char* message) {
 	int allocation = 1;
+	int value;
 	char* buffer = (char*)malloc(allocation*sizeof(char));
 	int i = 0;
 	while (isdigit(message[i])) {
@@ -247,10 +220,12 @@ long int decodeNumber(char* message) {
 		buffer = realloc(buffer, allocation*sizeof(char));
 		i++;
 	}
-	return atoi(buffer);
+	value = atoi(buffer);
+	free(buffer);
+	return value;
 }
 
-long int decodeLength(protocol_message message) {
+int decodeLength(protocol_message message) {
 	return decodeNumber(message);
 }
 
@@ -287,56 +262,44 @@ message_type decodeType(protocol_message message) {
 }
 
 void extractMessageContent(protocol_message message, protocol_data* data, const char* codeStructure) {
-	int messageTotalLength = data->total_length;
 	int codeStructureLength = strlen(codeStructure);
 	char current_token;
+	int current_position = headerLength(message);
 	int i;
 	for (i = 0; i < codeStructureLength; i++) {
 			current_token = codeStructure[i];
-			switch (current_token) {
-				case 'I':
-					break;
-				case 'L':
-					break;
-				case 'S':
-					break;
-				default:
-					break;
+			// Décodage d'un nombre
+			if (current_token == 'I' || current_token == 'L') {
+				int number_length;
+				if (current_token == 'I')
+					number_length = 4;
+				else if (current_token == 'L')
+					number_length = 8;
+				char buffer[number_length];
+				int j;
+				for (j = 0; j < number_length; j++) {
+					buffer[j] = message[current_position];
+					current_position++;
+				}
+				addMessageNumber(data, atoi(buffer));
 			}
-	}
-
-
-	// TEMPORAIRE EN ATTENDANT UN VRAI DECODAGE
-  int header_length = headerLength(message);
-	if (strcmp(codeStructure, "I") == 0) {
-		addMessageNumber(data, atoi(message+header_length));
-	}
-	else if (strcmp(codeStructure, "SS") == 0) {
-		int i;
-		char size1[4];
-		size1[0] = message[header_length];
-	  size1[1] = message[header_length+1];
-		size1[2] = message[header_length+2];
-		size1[3] = message[header_length+3];
-		int sizeString1 = atoi(size1);
-		char* string1 = malloc(sizeString1+1);
-		for (i = 0; i < sizeString1; i++) {
-			string1[i] = message[header_length+4+i];
-		}
-		string1[sizeString1] = '\0';
-		char size2[4];
-		size2[0] = message[header_length+4+sizeString1];
-	  size2[1] = message[header_length+4+sizeString1+1];
-		size2[2] = message[header_length+4+sizeString1+2];
-		size2[3] = message[header_length+4+sizeString1+3];
-		int sizeString2 = atoi(size2);
-		char* string2 = malloc(sizeString2+1);
-		string2[sizeString2] = '\0';
-		for (i = 0; i < sizeString2; i++) {
-			string2[i] = message[header_length+4+sizeString1+4+i];
-		}
-		addMessageString(data, string1);
-		addMessageString(data, string2);
+			// Décodage d'une chaîne
+			else if (current_token == 'S') {
+				char size_length = 4;
+				char buffer[size_length];
+				int j;
+				for (j = 0; j < size_length; j++) {
+					buffer[j] = message[current_position];
+					current_position++;
+				}
+				int size_value = atoi(buffer);
+				char* string = (char*)malloc(size_value*sizeof(char));
+				for (j = 0; j < size_value; j++) {
+					string[j] = message[current_position];
+					current_position++;
+				}
+				addMessageString(data, string);
+			}
 	}
 }
 
