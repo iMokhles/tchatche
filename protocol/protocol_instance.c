@@ -60,28 +60,28 @@ protocol_message encodeDeconnexionConfirmation(int id) {
 
 // ------------------- Connexion -------------------
 char* get_connexion_pseudo(protocol_data* dissection) {
-	char* pseudo = dissection->data->resource->data_union->string;
+	char* pseudo = get_nth_dissection(dissection, 0)->string;
 	return pseudo;
 }
 
 char* get_connexion_pipe(protocol_data* dissection) {
-	char* pipe = dissection->data->next->resource->data_union->string;
+	char* pipe = get_nth_dissection(dissection, 1)->string;
 	return pipe;
 }
 
 int get_connexionConfirmation_id(protocol_data* dissection) {
-	int id = dissection->data->resource->data_union->integer;
+	int id = get_nth_dissection(dissection, 0)->integer;
 	return id;
 }
 
 // ------------------- Deconnexion -------------------
 
 int get_deconnexion_id(protocol_data* dissection) {
-	int id = dissection->data->resource->data_union->integer;
+	int id = get_nth_dissection(dissection, 0)->integer;
 	return id;
 }
 
 int get_deconnexionConfirmation_id(protocol_data* dissection) {
-	int id = dissection->data->resource->data_union->integer;
+	int id = get_nth_dissection(dissection, 0)->integer;
 	return id;
 }

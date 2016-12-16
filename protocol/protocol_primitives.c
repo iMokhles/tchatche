@@ -318,3 +318,12 @@ protocol_data* dissectProtocol(protocol_message message) {
 	extractMessageContent(message, protocolData, codeStructure);
 	return protocolData;
 }
+
+content_union* get_nth_dissection(protocol_data* dissection, int nth) {
+	data_element* it = dissection->data;
+	int i;
+	for (i = 0; i < nth; i++) {
+		it = it->next;
+	}
+	return it->resource->data_union;
+}

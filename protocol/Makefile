@@ -8,6 +8,10 @@ all: $(EXEC)
 protocol.exe: protocol_primitives.o protocol_instance.o main.o
 		$(CC) $(LDFLAGS) -o $@ $^
 
+protocol_primitives.c: protocol_primitives.h
+
+protocol_instance.c: protocol_instance.h
+
 %.o: %.c
 		$(CC) -o $@ -c $< $(CFLAGS)
 

@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <math.h>
 #include "protocol_primitives.h"
 #include "protocol_instance.h"
 

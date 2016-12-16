@@ -105,4 +105,6 @@ int headerLength(protocol_message message);
 
 protocol_data* dissectProtocol(protocol_message message);
 
+content_union* get_nth_dissection(protocol_data* dissection, int nth);
+
 #endif
