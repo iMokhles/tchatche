@@ -6,7 +6,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
-#include "protocol_primitives.h"
 
 /* ---------------------------------------------
 			 FONCTIONS D'ENCODAGE
@@ -28,5 +27,9 @@ protocol_message encodeDeconnexionConfirmation(long int id);
 /* ---------------------------------------------
 			FONCTIONS DE DECODAGE
    --------------------------------------------- */
+
+char* get_connexion_pseudo(protocol_data* message);
+
+char* get_connexion_pipe(protocol_data* message);
 
 #endif

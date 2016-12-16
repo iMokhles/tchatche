@@ -59,5 +59,14 @@ protocol_message encodeDeconnexionConfirmation(long int id) {
    --------------------------------------------- */
 
 // ------------------- Connexion -------------------
+char* get_connexion_pseudo(protocol_data* dissection) {
+	char* pseudo = dissection->data->resource->data_union->string;
+	return pseudo;
+}
+
+char* get_connexion_pipe(protocol_data* dissection) {
+	char* pipe = dissection->data->next->resource->data_union->string;
+	return pipe;
+}
 
 // ------------------- Deconnexion -------------------
