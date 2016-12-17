@@ -39,7 +39,7 @@ int main() {
 	printf("Pseudo : %s\n", get_connexion_username(dissectionConnexion));
 	printf("Pipe : %s\n", get_connexion_pipe(dissectionConnexion));
 	// Message public
-	protocol_data* dissectionMessagePublic = dissectProtocol(messagePublic, TCHATCHE_SERVER);
+	protocol_data* dissectionMessagePublic = dissectProtocol(messagePublic, TCHATCHE_CLIENT);
 	printf("[%s] %s\n", get_publicMessageFeedback_username(dissectionMessagePublic), get_publicMessageFeedback_message(dissectionMessagePublic));
 	return 0;
 }

@@ -235,7 +235,7 @@ const char* getTypeStructure(message_type type, actor_type actor) {
 		case BADD_t: return ""; break;
 		case BYEE_t: return "I"; break;
 		case HELO_t: return "SS"; break;
-		case BCST_t: return (actor == TCHATCHE_CLIENT ? "IS" : "SS"); break;
+		case BCST_t: return (actor == TCHATCHE_CLIENT ? "SS" : "IS"); break;
 		default:
 			return NULL;
 			break;
