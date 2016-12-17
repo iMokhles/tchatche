@@ -230,11 +230,12 @@ int decodeLength(protocol_message message) {
 	return decodeNumber(message);
 }
 
-const char* getTypeStructure(message_type type) {
+const char* getTypeStructure(message_type type, actor_type actor) {
 	switch (type) {
 		case BADD_t: return ""; break;
 		case BYEE_t: return "I"; break;
 		case HELO_t: return "SS"; break;
+		case BCST_t: return (actor == TCHATCHE_CLIENT ? "IS" : "SS"); break;
 		default:
 			return NULL;
 			break;
@@ -312,12 +313,14 @@ int headerLength(protocol_message message) {
 	return l+MESSAGE_TYPE_LENGTH;
 }
 
-protocol_data* dissectProtocol(protocol_message message) {
+protocol_data* dissectProtocol(protocol_message message, actor_type actor) {
 	protocol_data* protocolData = (protocol_data*)malloc(sizeof(protocol_data));
 	protocolData->total_length = decodeLength(message);
 	protocolData->type = decodeType(message);
 	protocolData->data = NULL;
-	const char* codeStructure = getTypeStructure(protocolData->type);
+	const char* codeStructure = getTypeStructure(protocolData->type, actor);
+	if (codeStructure == NULL)
+		return NULL;
 	extractMessageContent(message, protocolData, codeStructure);
 	return protocolData;
 }
