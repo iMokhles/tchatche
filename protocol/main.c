@@ -6,8 +6,8 @@
 #include "protocol_instance.h"
 
 int main() {
-  // ENCODAGE
-  int i;
+	// ENCODAGE
+	int i;
 	protocol_message connexion = encodeConnexion("engboris", "s1");
 	for (i = 0; i < decodeLength(connexion); i++) {
 		printf("%c", connexion[i]);
@@ -30,25 +30,25 @@ int main() {
 	printf("\n");
 	printf("Type : %s\n", encodeType(decodeType(deconnexion)));
 
-  // DECODAGE
-  protocol_message connexion2 = encodeConnexion("engboris", "s1");
-  protocol_data* dissection = dissectProtocol(connexion2);
-  printf("Pseudo : %s\n", get_connexion_pseudo(dissection));
-  printf("Pipe : %s\n", get_connexion_pipe(dissection));
+	// DECODAGE
+	protocol_message connexion2 = encodeConnexion("engboris", "s1");
+	protocol_data* dissection = dissectProtocol(connexion2);
+	printf("Pseudo : %s\n", get_connexion_pseudo(dissection));
+	printf("Pipe : %s\n", get_connexion_pipe(dissection));
 
-  protocol_message connexion3 = encodeConnexion("chelbibachir", "s2");
-  protocol_data* dissection2 = dissectProtocol(connexion3);
-  printf("Pseudo : %s\n", get_connexion_pseudo(dissection2));
-  printf("Pipe : %s\n", get_connexion_pipe(dissection2));
+	protocol_message connexion3 = encodeConnexion("chelbibachir", "s2");
+	protocol_data* dissection2 = dissectProtocol(connexion3);
+	printf("Pseudo : %s\n", get_connexion_pseudo(dissection2));
+	printf("Pipe : %s\n", get_connexion_pipe(dissection2));
 
-  protocol_message deconnexion2 = encodeDeconnexion(15);
-  protocol_data* dissection3 = dissectProtocol(deconnexion2);
-  printf("ID : %d\n", get_deconnexion_id(dissection3));
+	protocol_message deconnexion2 = encodeDeconnexion(15);
+	protocol_data* dissection3 = dissectProtocol(deconnexion2);
+	printf("ID : %d\n", get_deconnexion_id(dissection3));
 
-  protocol_message connexion4 = encodeConnexion("kostiachardonnet", "s3");
-  protocol_data* dissection4 = dissectProtocol(connexion4);
-  printf("Pseudo : %s\n", get_connexion_pseudo(dissection4));
-  printf("Pipe : %s\n", get_connexion_pipe(dissection4));
+	protocol_message connexion4 = encodeConnexion("kostiachardonnet", "s3");
+	protocol_data* dissection4 = dissectProtocol(connexion4);
+	printf("Pseudo : %s\n", get_connexion_pseudo(dissection4));
+	printf("Pipe : %s\n", get_connexion_pipe(dissection4));
 
 	return 0;
 }

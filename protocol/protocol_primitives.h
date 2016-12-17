@@ -30,7 +30,7 @@ typedef enum content_type {
 } content_type;
 
 typedef union content_union {
-	int integer;
+	long int integer;
 	char* string;
 } content_union;
 
