@@ -9,7 +9,7 @@
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
-char* network_path = "../network/Serveur.pipe";
+char* network_path = "../server/Serveur.pipe";
 char* my_pipe = "";
 int id;
 int *pipes;
@@ -26,12 +26,11 @@ void connexion()
 	//mode_t t = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
 
 	if(access (network_path, F_OK) == -1){
-		printf("le serveur n'existe pas");
+		printf("can't access server");
 		exit(-1);
 	}
 
 	pipes[0] = open(network_path, O_WRONLY);
-	pipes[1] = open(my_pipe, O_RDONLY);
 
 	//size_t size = 16;
 	char buff[50];
@@ -57,6 +56,9 @@ int connexion_approval(char* pseudo)
 	protocol_message connexion = encodeConnexion(pseudo, pseudo); // protocol_message = char* 
 
 	write(pipes[0], connexion, strlen(connexion) * sizeof(char));
+
+	pipes[1] = open(strcat("../server/", pseudo), O_RDONLY);
+
 
 	char* message = read_message();
 
