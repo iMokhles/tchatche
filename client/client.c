@@ -10,7 +10,7 @@
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
 char* network_path = "../server/Serveur.pipe";
-char* my_pipe = "";
+//char* my_pipe = "";
 int id;
 int *pipes;
 
@@ -111,9 +111,9 @@ char* read_message()
 	msg_length = atoi(tmp_size);
 	char* body = (char*) calloc (msg_length, sizeof(char));
 
-	read(pipes[1], body, msg_length);
+	read(pipes[1], body, msg_length-4);
 
-	char* result = (char*) calloc (msg_length + strlen(tmp_size), sizeof(char));
+	char* result = (char*) calloc (strlen(body) + msg_length, sizeof(char));
 	strcat(result, tmp_size);
 	strcat(result, body);
 

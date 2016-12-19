@@ -1,15 +1,22 @@
 CC=gcc
 CFLAGS=-Wall
-EXEC=tmp
+EXEC=client
 
 all: $(EXEC)
 
-tmp: ihm.c
-				$(CC) -o $@ $^ -lpanel -lncurses
+client: client.c protocol_primitives.o protocol_instance.o
+		$(CC) -o $@ $^
+
+protocol_primitives.c: protocol_primitives.h
+
+protocol_instance.c: protocol_instance.h
+
+%.o: %.c
+		$(CC) -o $@ -c $< $(CFLAGS)
 
 clean:
-				rm -rf *.o
+		rm -rf *.o
 
 mrproper: clean
-				rm -rf *.o
-				rm -rf $(EXEC)
+		rm -rf *.o
+		rm -rf $(EXEC)
