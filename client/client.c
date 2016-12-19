@@ -20,15 +20,10 @@ void run()
 	connexion();
 }
 
-char* get_message(size_t t)
-{
-	return NULL;
-}
-
 void connexion()
 {
 
-	mode_t t = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+	//mode_t t = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
 
 	if(access (network_path, F_OK) == -1){
 		printf("le serveur n'existe pas");
@@ -38,78 +33,100 @@ void connexion()
 	pipes[0] = open(network_path, O_WRONLY);
 	pipes[1] = open(my_pipe, O_RDONLY);
 
-	size_t size = 16;
-	char* buff;
+	//size_t size = 16;
+	char buff[50];
 	do
 	{
 		printf("Veuillez choisir un pseudo : ");
-		if((buff = get_message(size)) == NULL) // pas d'input de l'utilisateur
-			continue;
+		scanf("%s", buff);
 
 	}while(connexion_approval(buff) == -1);
 
 }
 
+char* get_user_input(size_t t)
+{
+	return NULL;
+}
+
+
 //FIXME : envoyer le msg encodé + récup id + chemin de tube perso et l'ouvrir en lecture.
 int connexion_approval(char* pseudo)
 {
 
-	protocol_message connexion = encodeConnexion(pseudo, pseudo);
+	protocol_message connexion = encodeConnexion(pseudo, pseudo); // protocol_message = char* 
 
-	write(pipes[0], pseudo, strlen(pseudo) * sizeof(char));
-	char buff[4];
+	write(pipes[0], connexion, strlen(connexion) * sizeof(char));
 
-	//read(pipes[0], ?, ?);
+	char* message = read_message();
 
-	if(strcmp(buff, "OKOK") == 0)
+	protocol_data* dissection = dissectProtocol(message, TCHATCHE_CLIENT);
+	
+
+	if(dissection->type == OKOK_t)
 	{
-		id = 0;
+		id = get_connexionConfirmation_id(dissection);
+		free(message);
+		freeProtocolData(dissection);
 		return 1;
 	}
-
+	
+	free(message);
+	freeProtocolData(dissection);
 	return -1;
 }
 
 void deconnexion()
 {
-	char* msg = encode_deconnexion(id);
-	write(pipes[0], msg, strlen(msg) + sizeof(char));
+	// char* msg = encode_deconnexion(id);
+	// write(pipes[0], msg, strlen(msg) + sizeof(char));
 
 	close(pipes[0]);
 	close(pipes[1]);
 	free(pipes);
 }
 
-void read_message()
+char* read_message()
 {
 	int msg_length;
-	char* msg;
 
-	char c;
-	int tmp = 1;	
-	char* tmp_size = (char*) calloc (1, 1);
-	while(1) //number for ascii
-	{
+	// char c;
+	// int tmp = 1;	
+	char* tmp_size = (char*) calloc (4, sizeof(char));
+	read(pipes[1], tmp_size, sizeof(char)*4);
+	// while(1) //number for ascii
+	// {
 
-	  	read(pipes[1], &c, sizeof(char));
-	    if(c < 48 || c > 57) // c is not a number, we got the full length
-	    	break;
-	    tmp++;
-	    tmp_size = (char*) realloc (tmp_size, tmp);
-	    tmp_size[tmp-1] = c;
+	//   	read(pipes[1], &c, sizeof(char));
+	//     if(c < 48 || c > 57) // c is not a number, we got the full length
+	//     	break;
+	//     tmp++;
+	//     tmp_size = (char*) realloc (tmp_size, tmp);
+	//     tmp_size[tmp-1] = c;
 
-	}
+	// }
 
 	msg_length = atoi(tmp_size);
-	msg = (char*) calloc (msg_length, sizeof(char));
+	char* body = (char*) calloc (msg_length, sizeof(char));
 
-	read(pipes[1], msg, msg_length);
+	read(pipes[1], body, msg_length);
+
+	char* result = (char*) calloc (msg_length + strlen(tmp_size), sizeof(char));
+	strcat(result, tmp_size);
+	strcat(result, body);
+
+	free(body);
+	free(tmp_size);
+
+	return result;
+
+
 }
 
 void send_message(char* msg)
 {
-	char* code = encode(msg);
-	write(pipes[0], code, strlen(code));
+	// char* code = encode(msg);
+	// write(pipes[0], code, strlen(code));
 }
 
 void print_message(const char* msg)

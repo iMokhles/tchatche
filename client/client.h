@@ -14,7 +14,7 @@ void run();
 void connexion();
 int connexion_approval(char* pseudo);
 void deconnexion();
-void read_message();
+char* read_message();
 void send_message();
 void print_message(const char* msg);
 char* parsing(const char* msg);
