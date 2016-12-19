@@ -9,7 +9,7 @@
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
-char* network_path = "../server/Serveur.pipe";
+char* network_path = "../server/Server.pipe";
 //char* my_pipe = "";
 int id;
 int *pipes;
@@ -41,6 +41,8 @@ void connexion()
 
 	}while(connexion_approval(buff) == -1);
 
+	printf("connexion approuvée");
+
 }
 
 char* get_user_input(size_t t)
@@ -57,7 +59,11 @@ int connexion_approval(char* pseudo)
 
 	write(pipes[0], connexion, strlen(connexion) * sizeof(char));
 
-	pipes[1] = open(strcat("../server/", pseudo), O_RDONLY);
+	char my_pipe[50];
+	strcpy(my_pipe, "../server/");
+	strcat(my_pipe, pseudo);
+
+	pipes[1] = open(my_pipe, O_RDONLY);
 
 
 	char* message = read_message();
@@ -111,10 +117,10 @@ char* read_message()
 	msg_length = atoi(tmp_size);
 	char* body = (char*) calloc (msg_length, sizeof(char));
 
-	read(pipes[1], body, msg_length-4);
+	read(pipes[1], body, msg_length);
 
 	char* result = (char*) calloc (strlen(body) + msg_length, sizeof(char));
-	strcat(result, tmp_size);
+	strcpy(result, tmp_size);
 	strcat(result, body);
 
 	free(body);
