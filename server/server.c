@@ -8,8 +8,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <ctype.h>
-#include "protocol_primitives.h"
-#include "protocol_instance.h"
+
 
 
 #define OCTET_4 4 
@@ -55,7 +54,7 @@ int main(int arg , char * argv []){
     fprintf(stderr,"error fd \n");
     exit(4);
   }
-  char * msg ;
+
   char size_msg [5] ;
   
   
