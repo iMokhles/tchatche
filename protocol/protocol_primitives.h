@@ -24,13 +24,18 @@ typedef enum message_type {
 	FILE_t
 } message_type;
 
+typedef enum actor_type {
+	TCHATCHE_CLIENT,
+	TCHATCHE_SERVER
+} actor_type;
+
 typedef enum content_type {
 	STRING_MESSAGE,
 	INTEGER_MESSAGE
 } content_type;
 
 typedef union content_union {
-	int integer;
+	long int integer;
 	char* string;
 } content_union;
 
@@ -97,13 +102,14 @@ message_type decodeType(protocol_message message);
 // L : Long
 // S : String
 // Retourne NULL si échec
-const char* getTypeStructure(message_type type);
+const char* getTypeStructure(message_type type, actor_type actor);
 
 void extractMessageContent(protocol_message message, protocol_data* data, const char* codeStructure);
 
 int headerLength(protocol_message message);
 
-protocol_data* dissectProtocol(protocol_message message);
+// Retourne NULL si échec
+protocol_data* dissectProtocol(protocol_message message, actor_type actor);
 
 content_union* get_nth_dissection(protocol_data* dissection, int nth);
 

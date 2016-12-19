@@ -33,12 +33,13 @@ void freeProtocolContent(content_data* d) {
 		}
 		free(d->data_union);
 	}
+	free(d);
 }
 
 void freeProtocolData(protocol_data* d) {
 	data_element* e = d->data;
 	while (e != NULL) {
-	        freeProtocolContent(e->resource);
+	    freeProtocolContent(e->resource);
 		data_element* tmp = e;
 		e = e->next;
 		free(tmp);
@@ -47,18 +48,18 @@ void freeProtocolData(protocol_data* d) {
 }
 
 void insertData(protocol_data* d, content_data* content) {
-	data_element* es = (data_element*)malloc(sizeof(data_element));
-	es->resource = content;
-	es->next = NULL;
+	data_element* new = (data_element*)malloc(sizeof(data_element));
+	new->resource = content;
+	new->next = NULL;
 
-	data_element* e = d->data;
-	if (e != NULL) {
-		while (e->next != NULL)
-			e = e->next;
-		e->next = es;
+	data_element* it = d->data;
+	if (it != NULL) {
+		while (it->next != NULL)
+			it = it->next;
+		it->next = new;
 	}
 	else {
-		d->data = es;
+		d->data = new;
 	}
 }
 
@@ -86,7 +87,7 @@ const char* encodeType(message_type type) {
 }
 
 char* encodeNumber(int n, int length) {
-	char* buffer = (char*)malloc(sizeof(char)*length+1);
+	char* buffer = (char*)malloc((length+1)*sizeof(char));
 	int i;
 	int mod_factor = 10, div_factor = 1;
 	for (i = length-1; i >= 0; i--) {
@@ -94,29 +95,17 @@ char* encodeNumber(int n, int length) {
 		mod_factor *= 10;
 		div_factor *= 10;
 	}
+	buffer[length] = '\0';
 	return buffer;
 }
 
 char* encodeString(char* string, int length) {
-	char* buffer;
-	char* numberEncoding;
-	if (length <= 9999) {
-		buffer = (char*)calloc(sizeof(char), length+4+1);
-		numberEncoding = encodeNumber(length, 4);
-		buffer[length+4] = '\0';
-	}
-	else if (length <= 99999999) {
-		buffer = (char*)calloc(sizeof(char), length+8+1);
-		numberEncoding = encodeNumber(length, 8);
-		buffer[length+8] = '\0';
-	}
-	else {
-		printf("encodeString : length to large to encode");
-		exit(0);
-	}
-	buffer = strcat(buffer, numberEncoding);
-	buffer = strcat(buffer, string);
+	char* buffer = (char*)malloc((4+length+1)*sizeof(char));
+	char* numberEncoding = encodeNumber(length, 4);
+	strcpy(buffer, numberEncoding);
+	strcat(buffer, string);
 	free(numberEncoding);
+	buffer[4+length] = '\0';
 	return buffer;
 }
 
@@ -130,11 +119,12 @@ protocol_data* initMessageHeader(message_type type) {
 
 protocol_message encodeProtocolData(protocol_data* d) {
 	// Composition de l'entête du message
-	int length_nbchar = 4;
-	char* buffer_message = (char*)calloc(sizeof(char), length_nbchar+MESSAGE_TYPE_LENGTH+1);
+	const int header_length = 4+MESSAGE_TYPE_LENGTH;
+	int allocation = header_length+1;
+	char* buffer_message = (char*)malloc(allocation*sizeof(char));
 
 	char* numberEncoding = encodeNumber(d->total_length, 4);
-	buffer_message = strcat(buffer_message, numberEncoding);
+	buffer_message = strcpy(buffer_message, numberEncoding);
 	buffer_message = strcat(buffer_message, encodeType(d->type));
 
 	// Composition des données du message dans une structure
@@ -144,22 +134,32 @@ protocol_message encodeProtocolData(protocol_data* d) {
 		if (e->resource->is_string == 1) {
 			int string_length = strlen(e->resource->data_union->string);
 			char* stringEncoding = encodeString(e->resource->data_union->string, string_length);
-			buffer_message = (char*)realloc(buffer_message, sizeof(char)*(length_nbchar+MESSAGE_TYPE_LENGTH+4+string_length+1));
+			allocation += (header_length+4+string_length+1);
+			buffer_message = (char*)realloc(buffer_message, sizeof(char)*allocation);
 			buffer_message = strcat(buffer_message, stringEncoding);
 			free(stringEncoding);
 		}
 		// Cas des nombres
 		else {
-			int string_length = 4;
+			int string_length;
+			if (e->resource->data_union->integer <= 9999)
+  				string_length = 4;
+  			else if (e->resource->data_union->integer <= 99999999)
+  				string_length = 8;
+  			else {
+  				printf("addMessageNumber : depassement de limite d'entier.");
+	  			exit(0);
+  			}
 			char* numberEncoding = encodeNumber(e->resource->data_union->integer, string_length);
-			buffer_message = (char*)realloc(buffer_message, sizeof(char)*(length_nbchar+MESSAGE_TYPE_LENGTH+string_length+1));
-			buffer_message = strcat(buffer_message, numberEncoding);
+			allocation += (header_length+string_length+1);
+			buffer_message = (char*)realloc(buffer_message, sizeof(char)*allocation);
+			strcat(buffer_message, numberEncoding);
 			free(numberEncoding);
 		}
 		e = e->next;
 	}
 
-	//freeProtocolData(d);
+	freeProtocolData(d);
 
 	return buffer_message;
 }
@@ -172,9 +172,10 @@ void addMessageString(protocol_data* d, char* string) {
 	int stringEncodingLength = 4+string_length;
 	d->total_length += stringEncodingLength;
 
-	// Assemblage
-	char* buffer = (char*)calloc(sizeof(char), string_length);
-	buffer = strcat(buffer, string);
+	// Ajout
+	char* buffer = (char*)malloc((string_length+1)*sizeof(char));
+	strcpy(buffer, string);
+	buffer[string_length] = '\0';
 
 	cu->string = buffer;
 	cd->is_string = 1;
@@ -183,14 +184,14 @@ void addMessageString(protocol_data* d, char* string) {
 }
 
 void addMessageNumber(protocol_data* d, int number) {
-  if (number <= 9999)
-  	d->total_length += 4;
-  else if (number <= 99999999)
-  	d->total_length += 8;
-  else {
-  	printf("addMessageNumber : depassement de limite d'entier.");
-	  exit(0);
-  }
+	if (number <= 9999)
+  		d->total_length += 4;
+  	else if (number <= 99999999)
+  		d->total_length += 8;
+  	else {
+  		printf("addMessageNumber : depassement de limite d'entier.");
+	  	exit(0);
+  	}
 	content_data* cd = (content_data*)malloc(sizeof(content_data));
 	content_union* cu = (content_union*)malloc(sizeof(content_union));
 	cu->integer = number;
@@ -229,11 +230,12 @@ int decodeLength(protocol_message message) {
 	return decodeNumber(message);
 }
 
-const char* getTypeStructure(message_type type) {
+const char* getTypeStructure(message_type type, actor_type actor) {
 	switch (type) {
 		case BADD_t: return ""; break;
 		case BYEE_t: return "I"; break;
 		case HELO_t: return "SS"; break;
+		case BCST_t: return (actor == TCHATCHE_CLIENT ? "SS" : "IS"); break;
 		default:
 			return NULL;
 			break;
@@ -293,11 +295,12 @@ void extractMessageContent(protocol_message message, protocol_data* data, const 
 					current_position++;
 				}
 				int size_value = atoi(buffer);
-				char* string = (char*)malloc(size_value*sizeof(char));
+				char* string = (char*)malloc((size_value+1)*sizeof(char));
 				for (j = 0; j < size_value; j++) {
 					string[j] = message[current_position];
 					current_position++;
 				}
+				string[size_value] = '\0';
 				addMessageString(data, string);
 			}
 	}
@@ -310,11 +313,14 @@ int headerLength(protocol_message message) {
 	return l+MESSAGE_TYPE_LENGTH;
 }
 
-protocol_data* dissectProtocol(protocol_message message) {
+protocol_data* dissectProtocol(protocol_message message, actor_type actor) {
 	protocol_data* protocolData = (protocol_data*)malloc(sizeof(protocol_data));
 	protocolData->total_length = decodeLength(message);
 	protocolData->type = decodeType(message);
-	const char* codeStructure = getTypeStructure(protocolData->type);
+	protocolData->data = NULL;
+	const char* codeStructure = getTypeStructure(protocolData->type, actor);
+	if (codeStructure == NULL)
+		return NULL;
 	extractMessageContent(message, protocolData, codeStructure);
 	return protocolData;
 }
@@ -322,8 +328,7 @@ protocol_data* dissectProtocol(protocol_message message) {
 content_union* get_nth_dissection(protocol_data* dissection, int nth) {
 	data_element* it = dissection->data;
 	int i;
-	for (i = 0; i < nth; i++) {
+	for (i = 0; i < nth; i++)
 		it = it->next;
-	}
 	return it->resource->data_union;
 }

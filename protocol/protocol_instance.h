@@ -12,7 +12,7 @@
    --------------------------------------------- */
 
 // ------------------- Connexion -------------------
-protocol_message encodeConnexion(char* pseudo, char* tube);
+protocol_message encodeConnexion(char* username, char* tube);
 
 protocol_message encodeConnexionConfirmation(int id);
 
@@ -24,20 +24,32 @@ protocol_message encodeDeconnexion(int id);
 
 protocol_message encodeDeconnexionConfirmation(int id);
 
+// ------------------- Message public -------------------
+protocol_message encodePublicMessage(int id, char* message);
+
+protocol_message encodePublicMessageFeedback(char* username, char* message);
+
 /* ---------------------------------------------
 			FONCTIONS DE DECODAGE
    --------------------------------------------- */
 
 // ------------------- Connexion -------------------
-char* get_connexion_pseudo(protocol_data* message);
+char* get_connexion_username(protocol_data* dissection);
+char* get_connexion_pipe(protocol_data* dissection);
 
-char* get_connexion_pipe(protocol_data* message);
-
-int get_connexionConfirmation_id(protocol_data* message);
+int get_connexionConfirmation_id(protocol_data* dissection);
 
 // ------------------- Deconnexion -------------------
-int get_deconnexion_id(protocol_data* message);
+int get_deconnexion_id(protocol_data* dissection);
 
-int get_deconnexionConfirmation_id(protocol_data* message);
+int get_deconnexionConfirmation_id(protocol_data* dissection);
+
+// ------------------- Message public -------------------
+int get_publicMessage_id(protocol_data* dissection);
+char* get_publicMessage_message(protocol_data* dissection);
+
+char* get_publicMessageFeedback_username(protocol_data* dissection);
+char* get_publicMessageFeedback_message(protocol_data* dissection);
+
 
 #endif

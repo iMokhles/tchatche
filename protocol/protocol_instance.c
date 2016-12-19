@@ -24,9 +24,9 @@ Le header correspond a la taille + le type
    --------------------------------------------- */
 
 // ------------------- Connexion -------------------
-protocol_message encodeConnexion(char* pseudo, char* tube) {
+protocol_message encodeConnexion(char* username, char* tube) {
 	protocol_data* header = initMessageHeader(HELO_t);
-	addMessageString(header, pseudo);
+	addMessageString(header, username);
 	addMessageString(header, tube);
 	return encodeProtocolData(header);
 }
@@ -54,14 +54,29 @@ protocol_message encodeDeconnexionConfirmation(int id) {
 	return encodeDeconnexion(id);
 }
 
+// ------------------- Message public -------------------
+protocol_message encodePublicMessage(int id, char* message) {
+	protocol_data* header = initMessageHeader(BCST_t);
+	addMessageNumber(header, id);
+	addMessageString(header, message);
+	return encodeProtocolData(header);
+}
+
+protocol_message encodePublicMessageFeedback(char* username, char* message) {
+	protocol_data* header = initMessageHeader(BCST_t);
+	addMessageString(header, username);
+	addMessageString(header, message);
+	return encodeProtocolData(header);
+}
+
 /* ---------------------------------------------
 			FONCTIONS DE DECODAGE
    --------------------------------------------- */
 
 // ------------------- Connexion -------------------
-char* get_connexion_pseudo(protocol_data* dissection) {
-	char* pseudo = get_nth_dissection(dissection, 0)->string;
-	return pseudo;
+char* get_connexion_username(protocol_data* dissection) {
+	char* username = get_nth_dissection(dissection, 0)->string;
+	return username;
 }
 
 char* get_connexion_pipe(protocol_data* dissection) {
@@ -75,7 +90,6 @@ int get_connexionConfirmation_id(protocol_data* dissection) {
 }
 
 // ------------------- Deconnexion -------------------
-
 int get_deconnexion_id(protocol_data* dissection) {
 	int id = get_nth_dissection(dissection, 0)->integer;
 	return id;
@@ -84,4 +98,25 @@ int get_deconnexion_id(protocol_data* dissection) {
 int get_deconnexionConfirmation_id(protocol_data* dissection) {
 	int id = get_nth_dissection(dissection, 0)->integer;
 	return id;
+}
+
+// ------------------- Message public -------------------
+int get_publicMessage_id(protocol_data* dissection) {
+	int id = get_nth_dissection(dissection, 0)->integer;
+	return id;
+}
+
+char* get_publicMessage_message(protocol_data* dissection) {
+	char* message = get_nth_dissection(dissection, 1)->string;
+	return message;
+}
+
+char* get_publicMessageFeedback_username(protocol_data* dissection) {
+	char* username = get_nth_dissection(dissection, 0)->string;
+	return username;
+}
+
+char* get_publicMessageFeedback_message(protocol_data* dissection) {
+	char* message = get_nth_dissection(dissection, 1)->string;
+	return message;
 }
