@@ -5,11 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <math.h>
 
 typedef char* protocol_message;
 
 #define MESSAGE_TYPE_LENGTH 4
+#define TOTAL_SIZE_LENGTH 4
+#define STRING_SIZE_LENGTH 4
+#define HEADER_LENGTH TOTAL_SIZE_LENGTH+MESSAGE_TYPE_LENGTH
 
 typedef enum message_type {
 	BCST_t,
@@ -28,11 +30,6 @@ typedef enum actor_type {
 	TCHATCHE_CLIENT,
 	TCHATCHE_SERVER
 } actor_type;
-
-typedef enum content_type {
-	STRING_MESSAGE,
-	INTEGER_MESSAGE
-} content_type;
 
 typedef union content_union {
 	long int integer;
@@ -71,7 +68,7 @@ void insertData(protocol_data* d, content_data* content);
 
 const char* encodeType(message_type type);
 
-char* encodeNumber(int n, int length);
+char* encodeNumber(long int n, int length);
 
 char* encodeString(char* string, int length);
 
@@ -81,7 +78,7 @@ protocol_message encodeProtocolData(protocol_data* d);
 
 void addMessageString(protocol_data* d, char* string);
 
-void addMessageNumber(protocol_data* d, int number);
+void addMessageNumber(protocol_data* d, long int number);
 
 /* ---------------------------------------------
 			FONCTIONS DE DECODAGE
@@ -89,7 +86,7 @@ void addMessageNumber(protocol_data* d, int number);
 
 int char2int(char c);
 
-int decodeNumber(char* number);
+long int decodeNumber(char* number);
 
 int decodeLength(protocol_message message);
 
@@ -102,7 +99,7 @@ message_type decodeType(protocol_message message);
 // L : Long
 // S : String
 // Retourne NULL si échec
-const char* getTypeStructure(message_type type, actor_type actor);
+const char* getCodeStructure(message_type type, actor_type actor);
 
 void extractMessageContent(protocol_message message, protocol_data* data, const char* codeStructure);
 

@@ -19,7 +19,6 @@ d'un nouveau type, on est prevenu par une erreur lors de l'execution.
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <math.h>
 #include "protocol_primitives.h"
 
 /* ---------------------------------------------
@@ -86,7 +85,7 @@ const char* encodeType(message_type type) {
 	}
 }
 
-char* encodeNumber(int n, int length) {
+char* encodeNumber(long int n, int length) {
 	char* buffer = (char*)malloc((length+1)*sizeof(char));
 	int i;
 	int mod_factor = 10, div_factor = 1;
@@ -100,18 +99,18 @@ char* encodeNumber(int n, int length) {
 }
 
 char* encodeString(char* string, int length) {
-	char* buffer = (char*)malloc((4+length+1)*sizeof(char));
-	char* numberEncoding = encodeNumber(length, 4);
+	char* buffer = (char*)malloc((STRING_SIZE_LENGTH+length+1)*sizeof(char));
+	char* numberEncoding = encodeNumber(length, STRING_SIZE_LENGTH);
 	strcpy(buffer, numberEncoding);
 	strcat(buffer, string);
 	free(numberEncoding);
-	buffer[4+length] = '\0';
+	buffer[STRING_SIZE_LENGTH+length] = '\0';
 	return buffer;
 }
 
 protocol_data* initMessageHeader(message_type type) {
 	protocol_data* p = (protocol_data*)malloc(sizeof(protocol_data));
-	p->total_length = 4+MESSAGE_TYPE_LENGTH;
+	p->total_length = TOTAL_SIZE_LENGTH+MESSAGE_TYPE_LENGTH;
 	p->type = type;
 	p->data = NULL;
 	return p;
@@ -119,11 +118,10 @@ protocol_data* initMessageHeader(message_type type) {
 
 protocol_message encodeProtocolData(protocol_data* d) {
 	// Composition de l'entête du message
-	const int header_length = 4+MESSAGE_TYPE_LENGTH;
-	int allocation = header_length+1;
+	int allocation = HEADER_LENGTH+1;
 	char* buffer_message = (char*)malloc(allocation*sizeof(char));
 
-	char* numberEncoding = encodeNumber(d->total_length, 4);
+	char* numberEncoding = encodeNumber(d->total_length, TOTAL_SIZE_LENGTH);
 	buffer_message = strcpy(buffer_message, numberEncoding);
 	buffer_message = strcat(buffer_message, encodeType(d->type));
 
@@ -134,7 +132,7 @@ protocol_message encodeProtocolData(protocol_data* d) {
 		if (e->resource->is_string == 1) {
 			int string_length = strlen(e->resource->data_union->string);
 			char* stringEncoding = encodeString(e->resource->data_union->string, string_length);
-			allocation += (header_length+4+string_length+1);
+			allocation += (HEADER_LENGTH+STRING_SIZE_LENGTH+string_length+1);
 			buffer_message = (char*)realloc(buffer_message, sizeof(char)*allocation);
 			buffer_message = strcat(buffer_message, stringEncoding);
 			free(stringEncoding);
@@ -151,7 +149,7 @@ protocol_message encodeProtocolData(protocol_data* d) {
 	  			exit(0);
   			}
 			char* numberEncoding = encodeNumber(e->resource->data_union->integer, string_length);
-			allocation += (header_length+string_length+1);
+			allocation += (HEADER_LENGTH+string_length+1);
 			buffer_message = (char*)realloc(buffer_message, sizeof(char)*allocation);
 			strcat(buffer_message, numberEncoding);
 			free(numberEncoding);
@@ -169,7 +167,7 @@ void addMessageString(protocol_data* d, char* string) {
 	content_union* cu = (content_union*)malloc(sizeof(content_union));
 	// Encodage de la chaine
 	int string_length = strlen(string);
-	int stringEncodingLength = 4+string_length;
+	int stringEncodingLength = STRING_SIZE_LENGTH+string_length;
 	d->total_length += stringEncodingLength;
 
 	// Ajout
@@ -183,7 +181,7 @@ void addMessageString(protocol_data* d, char* string) {
 	insertData(d, cd);
 }
 
-void addMessageNumber(protocol_data* d, int number) {
+void addMessageNumber(protocol_data* d, long int number) {
 	if (number <= 9999)
   		d->total_length += 4;
   	else if (number <= 99999999)
@@ -210,9 +208,9 @@ int char2int(char c) {
 
 // (1) On suppose qu'on ne peut pas avoir de chiffres dans le type
 // (2) On suppose que le type ne contient que des lettres majuscules
-int decodeNumber(char* message) {
+long int decodeNumber(char* message) {
 	int allocation = 1;
-	int value;
+	long int value;
 	char* buffer = (char*)malloc(allocation*sizeof(char));
 	int i = 0;
 	while (isdigit(message[i])) {
@@ -221,7 +219,7 @@ int decodeNumber(char* message) {
 		buffer = realloc(buffer, allocation*sizeof(char));
 		i++;
 	}
-	value = atoi(buffer);
+	value = atol(buffer);
 	free(buffer);
 	return value;
 }
@@ -230,7 +228,7 @@ int decodeLength(protocol_message message) {
 	return decodeNumber(message);
 }
 
-const char* getTypeStructure(message_type type, actor_type actor) {
+const char* getCodeStructure(message_type type, actor_type actor) {
 	switch (type) {
 		case BADD_t: return ""; break;
 		case BYEE_t: return "I"; break;
@@ -247,8 +245,12 @@ message_type decodeType(protocol_message message) {
 	int i = 0;
 	while (isdigit(message[i]))
 		i++;
-	char* buffer = (char*)malloc(sizeof(char)*MESSAGE_TYPE_LENGTH);
-	sprintf(buffer, "%c%c%c%c", message[i], message[i+1], message[i+2], message[i+3]);
+	char* buffer = (char*)malloc(sizeof(char)*(MESSAGE_TYPE_LENGTH+1));
+	int j;
+	for (j = 0; j < MESSAGE_TYPE_LENGTH; j++) {
+		buffer[j] = (char)message[i+j];
+	}
+	buffer[MESSAGE_TYPE_LENGTH] = '\0';
 	     if (strcmp("BCST", buffer) == 0) { resultat = BCST_t; }
 	else if (strcmp("PRVT", buffer) == 0) { resultat = PRVT_t; }
 	else if (strcmp("BADD", buffer) == 0) { resultat = BADD_t; }
@@ -266,7 +268,7 @@ message_type decodeType(protocol_message message) {
 void extractMessageContent(protocol_message message, protocol_data* data, const char* codeStructure) {
 	int codeStructureLength = strlen(codeStructure);
 	char current_token;
-	int current_position = headerLength(message);
+	int current_position = HEADER_LENGTH;
 	int i;
 	for (i = 0; i < codeStructureLength; i++) {
 			current_token = codeStructure[i];
@@ -283,11 +285,11 @@ void extractMessageContent(protocol_message message, protocol_data* data, const 
 					buffer[j] = message[current_position];
 					current_position++;
 				}
-				addMessageNumber(data, atoi(buffer));
+				addMessageNumber(data, atol(buffer));
 			}
 			// Décodage d'une chaîne
 			else if (current_token == 'S') {
-				char size_length = 4;
+				char size_length = STRING_SIZE_LENGTH;
 				char buffer[size_length];
 				int j;
 				for (j = 0; j < size_length; j++) {
@@ -306,19 +308,12 @@ void extractMessageContent(protocol_message message, protocol_data* data, const 
 	}
 }
 
-int headerLength(protocol_message message) {
-  int l = 0;
-	while (isdigit(message[l]))
-	  l++;
-	return l+MESSAGE_TYPE_LENGTH;
-}
-
 protocol_data* dissectProtocol(protocol_message message, actor_type actor) {
 	protocol_data* protocolData = (protocol_data*)malloc(sizeof(protocol_data));
 	protocolData->total_length = decodeLength(message);
 	protocolData->type = decodeType(message);
 	protocolData->data = NULL;
-	const char* codeStructure = getTypeStructure(protocolData->type, actor);
+	const char* codeStructure = getCodeStructure(protocolData->type, actor);
 	if (codeStructure == NULL)
 		return NULL;
 	extractMessageContent(message, protocolData, codeStructure);

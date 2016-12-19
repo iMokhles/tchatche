@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <math.h>
+#include "protocol_primitives.h"
 
 /* ---------------------------------------------
 			 FONCTIONS D'ENCODAGE
