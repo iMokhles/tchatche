@@ -4,9 +4,10 @@ LDFLAGS=-lm
 EXEC=server.exe
 CFGLIB=`pkg-config --cflags --libs glib-2.0`
 
+
 all: $(EXEC) 
 
-$(EXEC) : server.o function.o
+$(EXEC) : server.o function.o 
 	$(CC) -o $(EXEC) $^ $(CFGLIB) $(CFLAGS)
 	
 function.o: function.c function.h
