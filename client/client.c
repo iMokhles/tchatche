@@ -18,13 +18,15 @@ void run()
 {
 	pipes = (int*) malloc (sizeof(int) * 2);
 	connexion();
+	//deconnexion();
 	// boucle programme
 
-// 	char* input;
-// 	while(strcmpcmp((input = get_user_input()), "/quit") != 0)
-// 	{
+	// char* input;
+	// while(strcmp((input = get_user_input()), "/quit") != 0)
+	// {
 
-// 	}
+	// }
+	// deconnexion();
 }
 
 void connexion()
@@ -44,8 +46,11 @@ void connexion()
 	{
 		printf("Veuillez choisir un pseudo : ");
 		scanf("%s", pseudo);
+		pseudo[strlen(pseudo) + 1 ] = '\0';
 		printf("Veuillez choisir un tube : ");
 		scanf("%s", tube);
+		pseudo[strlen(tube) + 1 ] = '\0';
+
 
 	}while(connexion_approval(pseudo, tube) == -1);
 
@@ -62,7 +67,7 @@ int connexion_approval(char* pseudo, char* tube)
 	char my_pipe[50];
 	strcpy(my_pipe, "../server/");
 	strcat(my_pipe, tube);
-
+	sleep(5);
 	pipes[1] = open(my_pipe, O_RDONLY);
 	if(pipes[1] == -1)
 	{
@@ -72,16 +77,17 @@ int connexion_approval(char* pseudo, char* tube)
 	char* message = read_message();
 	printf("message : %s\n%d\n", message, strlen(message));
 	protocol_data* dissection = dissectProtocol(message, TCHATCHE_CLIENT);
-	
+
 
 	if(dissection->type == OKOK_t)
-	{
+	{	
+		printf("dissection ok"); fflush(stdout);	
 		id = get_connexionConfirmation_id(dissection);
 		free(message);
 		freeProtocolData(dissection);
 		return 1;
 	}
-	
+	printf("dissection BADD\n");
 	free(message);
 	freeProtocolData(dissection);
 	return -1;
@@ -92,7 +98,7 @@ char* get_user_input()
 	char c;
 	int size = 0;
 	char* result = (char*) calloc (1, sizeof(char));
-	getchar();
+	getchar(); // throw the first \n
 	printf(">");
 	while((c = getchar()) != '\n')
 	{	
@@ -110,11 +116,19 @@ char* get_user_input()
 
 void deconnexion()
 {
-	// char* msg = encode_deconnexion(id);
-	// write(pipes[0], msg, strlen(msg) + sizeof(char));
+	protocol_message deconnexion = encodeDeconnexion(id); // protocol_message = char* 
+	send_message(deconnexion);
+	char* message = read_message();
+	protocol_data* dissection = dissectProtocol(message, TCHATCHE_CLIENT);
 
+	if(dissection->type != BYEE_t){
+		printf("you broke everything.");
+		exit(-616);
+	}
+	printf("Déconnexion du serveur");
 	close(pipes[0]);
 	close(pipes[1]);
+	free(message);
 	free(pipes);
 }
 
