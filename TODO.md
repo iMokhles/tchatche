@@ -2,6 +2,12 @@
 
 Pour proposer des requêtes, insérez des tâches dans la liste des autres. Entourez une tâche entre deux ~~ pour les barrer.
 
+## OBJECTIFS GENERAUX
+
+- Connecter un client au serveur via le protocole
+- Déconnecter un client au serveur via le protocole
+- Connecter deux clients à un serveur et échanger des messages publics avec le protocole
+
 ## [Serveur] : Bachir
 - Vérification de l'existence des pseudo
 - Modélisation de la liste des utilisateurs (hashmap ? comment gérer les connexions/déconnexion en gardant la bonne liaison entre id et utilisateur ?)
@@ -26,5 +32,6 @@ Pour proposer des requêtes, insérez des tâches dans la liste des autres. Ento
 - ~~Analyse et découpage du protocole~~
 - ~~Encodage dans le protocole~~
 - ~~Décodage dans le protocole~~
+- Retirer les parties inutiles
 - Instances de protocole
 - GERER LES FUITES DE MEMOIRE :-1:
