@@ -6,14 +6,26 @@
   FALSE -> 0 
 */
 
-gboolean insert_user(GHashTable * hash_tab, char * pseudo , char * id){
+gboolean insert_pseudo_pipe(GHashTable * hash_tab, char * pseudo , char * pipe){
   
   char * key = strdup(pseudo);
-  char * val = strdup(id);
+  char * val = strdup(pipe);
   if(key == NULL || val == NULL){
     return FALSE ; 
   }
   gboolean r = g_hash_table_insert (hash_tab,key,val) ;
+  return r ; 
+   
+}
+
+gboolean insert_pseudo_id(GHashTable * hash_tab, int * id ,char * pseudo  ){
+  
+  int * key = malloc(sizeof(int));
+	*key  = *id ;	
+  if(key == NULL ){
+    return FALSE ; 
+  }
+  gboolean r = g_hash_table_insert (hash_tab,key,pseudo) ;
   return r ; 
    
 }
