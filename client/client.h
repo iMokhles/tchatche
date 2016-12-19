@@ -12,9 +12,10 @@
 
 void run();
 void connexion();
-int connexion_approval(char* pseudo);
+int connexion_approval(char* pseudo,char* tube);
+char* get_user_input();
 void deconnexion();
 char* read_message();
-void send_message();
+void send_message(protocol_message msg);
 void print_message(const char* msg);
 char* parsing(const char* msg);
