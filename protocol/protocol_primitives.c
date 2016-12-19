@@ -231,6 +231,7 @@ int decodeLength(protocol_message message) {
 const char* getCodeStructure(message_type type, actor_type actor) {
 	switch (type) {
 		case BADD_t: return ""; break;
+		case OKOK_t : return "I"; break;
 		case BYEE_t: return "I"; break;
 		case HELO_t: return "SS"; break;
 		case BCST_t: return (actor == TCHATCHE_CLIENT ? "SS" : "IS"); break;

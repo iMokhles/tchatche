@@ -41,5 +41,8 @@ int main() {
 	// Message public
 	protocol_data* dissectionMessagePublic = dissectProtocol(messagePublic, TCHATCHE_CLIENT);
 	printf("[%s] %s\n", get_publicMessageFeedback_username(dissectionMessagePublic), get_publicMessageFeedback_message(dissectionMessagePublic));
+	// Confirmation
+	protocol_data* dissectionOKOK = dissectProtocol(confirmation, TCHATCHE_CLIENT);
+	printf("ID : %d\n", get_connexionConfirmation_id(dissectionOKOK));
 	return 0;
 }
